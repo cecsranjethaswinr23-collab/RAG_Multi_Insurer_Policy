@@ -93,7 +93,7 @@ st.caption("Compare quantitative sublimits, coverage terms, and exclusions acros
 st.header("👉Company Policies👈")
 
 company_filter = st.selectbox(
-    "Filter by Provider:",
+    "Filter by Policies:",
 ["All Insurers",
  'Care Senior Health',
  'Care Supreme',
@@ -124,15 +124,19 @@ def rag_system():
 
 try:
     vectorstore, llm = rag_system()
-    st.sidebar.success("✅ FAISS Vector Index Loaded")
 except Exception as e:
     st.error(f"Failed to load vector store: {e}. Did you run `ingest.ipynb` first?")
     st.stop()
 
 # 5. User Input
-user_query = st.text_input("Ask a question about coverage, sublimits, or exclusions:")
+with st.form(key="search_form"):
+    user_query = st.text_area("Ask a question about coverage, sublimits, or exclusions:",
+                              placeholder="Type your question here...",
+                              height=100
+                              )
+    submit_button = st.form_submit_button(label="Search 🔍")
 
-if user_query:
+if submit_button and user_query:
     with st.spinner("Searching policy documents..."):
         # Configure search metadata filter if selected
         search_kwargs = {"k": 4}
@@ -143,11 +147,11 @@ if user_query:
         retrieved_docs = vectorstore.similarity_search(user_query, **search_kwargs)
         
         # Step B: Format context string
-        context_str = "\n\n---\n\n".join([doc.page_content for doc in retrieved_docs])
+        context = "\n\n---\n\n".join([doc.page_content for doc in retrieved_docs])
         
         # Step C: Send context + query to Gemini
         chain = llm_prompt | llm
-        response = chain.invoke({"context": context_str, "question": user_query})
+        response = chain.invoke({"context": context, "question": user_query})
 
     # 6. Display Response
     st.markdown("### 🤖 Response")

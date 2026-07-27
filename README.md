@@ -25,10 +25,15 @@ An intelligent, aware Retrieval-Augmented Generation (RAG) system designed to se
 ## 🛠️ Tech Stack & Tools
 
 **Language:** Python
+
 **Framework:** Langchain
+
 **VectorDB:** FAISS (Facebook AI Similarity Search)
+
 **Frontend:** Streamlit
+
 **LLM:** Gemini (Google)
+
 **Cloud Deployment:** HuggingFace Spaces
 
 ## 📐 Architecture & Pipeline Flow
@@ -55,7 +60,9 @@ An intelligent, aware Retrieval-Augmented Generation (RAG) system designed to se
 ## Project Links & Author
 
 **Repository:** [GitHub](https://github.com/cecsranjethaswinr23-collab/RAG_Multi_Insurer_Policy)
+
 **Author:** Ranjeth Aswin Ravindran
+
 **Connect with me:** 👋 [LinkedIn](www.linkedin.com/in/ranjeth-aswin-ravindran-018277253)
                          [GitHub](https://github.com/cecsranjethaswinr23-collab)
 

@@ -47,10 +47,10 @@ application can be questioned to get right responses for you. The policies of in
 for company in companies_name:
     st.sidebar.markdown(f"- ***{company}***")
 
-# Google Drive link with policies for reference
+# Google Drive link with policies for reference to understand the application
 st.sidebar.link_button("💻 Go to Drive", "https://drive.google.com/drive/folders/1Rk2pvMNtB_v-P5YPo-qjoss2xBgO1VeQ?usp=sharing", use_container_width=True)
 
-# tech used in the application
+# tech used in the RAG application
 st.sidebar.subheader("🛠️ Tech Stack")
 tech_stack = [
     "Python",
@@ -91,29 +91,26 @@ st.caption("Compare quantitative sublimits, coverage terms, and exclusions acros
 
 
 st.header("👉Company Policies👈")
-
-company_filter = st.selectbox(
-    "Filter by Policies:",
-["All Insurers",
- 'Care Senior Health',
- 'Care Supreme',
- 'Care Ultimate Joy',
- 'Hdfc Equicover Health',
- 'Hdfc Pradhan Mantri Suraksha Bima Yojana',
- 'Hdfc Women Suraksha',
- 'Star Comprehensive Policy',
- 'Star Medi Classic Insurance Policy',
- 'Star Senior Citizen Policy',
- 'Star Women Policy',
- 'Ui Commercial Vehicles 3Rd Party',
- 'Ui Commercial Vehicles Cover',
- 'Ui Private Bike 1Yr Od 3Yr Tp',
- 'Ui Private Bike 1Yr Od 5Yr Tp',
- 'Ui Private Bike Only Tp',
- 'Ui Private Car Only Tp',
- 'Ui Scooter Own Damage']
-)
-
+company_filter = st.selectbox("Filter by Policies:",
+                              ["All Insurers",
+                               'Care Senior Health',
+                               'Care Supreme',
+                               'Care Ultimate Joy',
+                               'Hdfc Equicover Health',
+                               'Hdfc Pradhan Mantri Suraksha Bima Yojana',
+                               'Hdfc Women Suraksha',
+                               'Star Comprehensive Policy',
+                               'Star Medi Classic Insurance Policy',
+                               'Star Senior Citizen Policy',
+                               'Star Women Policy',
+                               'Ui Commercial Vehicles 3Rd Party',
+                               'Ui Commercial Vehicles Cover',
+                               'Ui Private Bike 1Yr Od 3Yr Tp',
+                               'Ui Private Bike 1Yr Od 5Yr Tp',
+                               'Ui Private Bike Only Tp',
+                               'Ui Private Car Only Tp',
+                               'Ui Scooter Own Damage']
+                               )
 
 def rag_system():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2") # embedding model
@@ -125,42 +122,41 @@ def rag_system():
 try:
     vectorstore, llm = rag_system()
 except Exception as e:
-    st.error(f"Failed to load vector store: {e}. Did you run `ingest.ipynb` first?")
+    st.error(f"Failed to load vector store: {e}. is FAISS file present ?")
     st.stop()
 
 # 5. User Input
 with st.form(key="search_form"):
-    user_query = st.text_area("Ask a question about coverage, sublimits, or exclusions:",
-                              placeholder="Type your question here...",
+    user_query = st.text_area("Ask a question about coverage, diseases the policy covers, or exclusions:",
+                              placeholder="Type your query here...",
                               height=100
                               )
-    submit_button = st.form_submit_button(label="Search 🔍")
+    submit_button = st.form_submit_button(label="Search 🔍") # search button to initiate
 
 if submit_button and user_query:
     with st.spinner("Searching policy documents..."):
-        # Configure search metadata filter if selected
-        search_kwargs = {"k": 4}
+        search_kwargs = {"k": 4} # top k=4 chunks to retrieve
         if company_filter != "All Insurers":
-            search_kwargs["filter"] = {"insurer": company_filter}
+            search_kwargs["filter"] = {"insurer": company_filter} # search metadata filter if selected
 
-        # Step A: Retrieve matching chunks from local FAISS
-        retrieved_docs = vectorstore.similarity_search(user_query, **search_kwargs)
+        retrieved_docs = vectorstore.similarity_search(user_query, **search_kwargs) # Retrieve matching chunks from local FAISS
         
-        # Step B: Format context string
-        context = "\n\n---\n\n".join([doc.page_content for doc in retrieved_docs])
-        
-        # Step C: Send context + query to Gemini
+        context = "\n\n---\n\n".join([doc.page_content for doc in retrieved_docs]) # Format context string
+         
         chain = llm_prompt | llm
-        response = chain.invoke({"context": context, "question": user_query})
+        response = chain.invoke({"context": context, "question": user_query}) # Send context + query to Gemini
 
-    # 6. Display Response
+    # Displaying the LLM Response
     st.markdown("### 🤖 Response")
     answer_text = response.content[0]["text"] if isinstance(response.content, list) else response.content
     st.markdown(answer_text)
 
 
-    # 7. Expandable Source Citations (Recruiter Delight)
+    # Expandable Source Citations (Recruiter Delight)
     with st.expander("🔍 View Retrieved Context Chunks & Page Numbers"):
         for i, doc in enumerate(retrieved_docs, start=1):
             st.markdown(f"**Chunk {i} | Insurer:** `{doc.metadata.get('insurer')}` | **Source:** `{doc.metadata.get('source')}` (Page {doc.metadata.get('page')})")
             st.code(doc.page_content, language="markdown")
+
+# end of Main page section
+# ------------------------------------------------------------------------------------------------------------------------------------

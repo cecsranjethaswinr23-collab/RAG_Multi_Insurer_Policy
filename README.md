@@ -20,6 +20,8 @@ An intelligent, aware Retrieval-Augmented Generation (RAG) system designed to se
 ![RAG UI STREAMLIT](image.png)
 
 ### User Interface of the response
+* the response for the query asked to the RAG application with a filter
+![response UI STREAMLIT](image-1.png)
 
 
 ## 🛠️ Tech Stack & Tools

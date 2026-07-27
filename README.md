@@ -4,7 +4,7 @@ An intelligent, aware Retrieval-Augmented Generation (RAG) system designed to se
 ## 🌟 Key Features
 **Structure-Aware Document Ingestion:** Uses pymupdf4llm to convert policy PDFs into structured Markdown, preserving critical tables, coverage sub-limits, and clause headers.
 
-***Automated Metadata Tagging:*** Automatically scans nested folder structures (data/policies/<Insurer>/) to tag chunks with provider names, document titles, and page numbers.
+**Automated Metadata Tagging:** Automatically scans nested folder structures (data/policies/<Insurer>/) to tag chunks with provider names, document titles, and page numbers.
 
 Fast Vector Search (FAISS): Embeds text chunks locally using sentence-transformers and indexes them in a local FAISS vector database.
 
@@ -22,6 +22,8 @@ Transparent Citations: Provides exact source document names and page numbers for
 **Frontend:** Streamlit
 **LLM:** Gemini (Google)
 **Cloud Deployment:** HuggingFace Spaces
+
+## 📐 Architecture & Pipeline Flow
        ┌─────────────────────────────────────────────────────────┐
        │            Offline Phase : preprocessing.ipynb          │
        │                                                         │

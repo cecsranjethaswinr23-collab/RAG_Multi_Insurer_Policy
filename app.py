@@ -12,6 +12,9 @@ from RAG_LLM_Prompt import llm_prompt
 
 load_dotenv() #Load environment variables from .env
 
+# used for aws deployment
+api_key = os.getenv("GOOGLE_API_KEY") # fetches the api key(if there is no api key in the .env file this exxactly fetches the api key)
+
 # webpage name and icon
 st.set_page_config(
     page_title="PolicyLens_AI",

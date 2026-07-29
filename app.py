@@ -84,7 +84,7 @@ st.sidebar.markdown("""
 
 # main page
 
-st.title("🤖  PolicyLens AI (RAG)")
+st.title("🤖 PolicyLens AI (RAG)")
 st.subheader("Policy Info retrieval AI application 🌐")
 st.markdown("""The application retrieves the insurance policy informations accurately from the data present in the vector database, 
 the policies that are in the database can be accessed through the link in the ABOUT section.

@@ -62,35 +62,38 @@ jobs:
   Continuous-Deployment:
     name: Continuous Deployment
     needs: build-and-push-ecr-image
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Deploy to AWS EC2 via SSH
-        uses: appleboy/ssh-action@v0.1.10
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            # Authenticate Docker to ECR on EC2
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_LOGIN_URI }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-            # Pull latest image
-            docker pull ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-            # Stop and remove existing container if running
-            docker stop rag-app || true
-            docker rm rag-app || true
+      - name: Pull and Run Streamlit Container
+        run: |
+          # Pull latest image from ECR
+          docker pull ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
-            # Run new container with Port 8501 and Google API Key
-            docker run -d \
-              -p 8501:8501 \
-              --name rag-app \
-              -e GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}" \
-              --restart always \
-              ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          # Stop and remove previous container if running
+          docker stop rag-app || true
+          docker rm rag-app || true
 
-            # Cleanup unused older images to free EC2 space
-            docker system prune -f
+          # Run new container with Streamlit port 8501 and Gemini API key
+          docker run -d \
+            -p 8501:8501 \
+            --name rag-app \
+            -e GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}" \
+            --restart always \
+            ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+          # Clean unused images to keep EC2 storage clean
+          docker system prune -f

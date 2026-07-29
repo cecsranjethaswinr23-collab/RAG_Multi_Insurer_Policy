@@ -60,40 +60,40 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   Continuous-Deployment:
-    name: Continuous Deployment
-    needs: build-and-push-ecr-image
-    runs-on: self-hosted
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      name: Continuous Deployment
+      needs: build-and-push-ecr-image
+      runs-on: self-hosted
+      steps:
+        - name: Checkout Code
+          uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        - name: Login to Amazon ECR Manually
+          run: |
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_LOGIN_URI }}
 
-      - name: Pull and Run Streamlit Container
-        run: |
-          # Pull latest image from ECR
-          docker pull ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+        - name: Pull and Run Streamlit Container
+          run: |
+            # Pull latest image from ECR
+            docker pull ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
-          # Stop and remove previous container if running
-          docker stop rag-app || true
-          docker rm rag-app || true
+            # Stop and remove previous container if running
+            docker stop rag-app || true
+            docker rm rag-app || true
 
-          # Run new container with Streamlit port 8501 and Gemini API key
-          docker run -d \
-            -p 8501:8501 \
-            --name rag-app \
-            -e GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}" \
-            --restart always \
-            ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+            # Run new container with Streamlit port 8501 and Gemini API key
+            docker run -d \
+              -p 8501:8501 \
+              --name rag-app \
+              -e GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}" \
+              --restart always \
+              ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
-          # Clean unused images to keep EC2 storage clean
-          docker system prune -f
+            # Clean unused images to keep EC2 storage clean
+            docker system prune -f

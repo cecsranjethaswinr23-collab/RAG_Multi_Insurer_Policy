@@ -16,3 +16,6 @@ faiss-cpu
 # UI & Utilities
 streamlit
 python-dotenv
+
+# Rag evaluation
+ragas

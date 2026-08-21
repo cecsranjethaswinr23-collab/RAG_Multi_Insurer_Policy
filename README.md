@@ -12,6 +12,15 @@ An intelligent, aware Retrieval-Augmented Generation (RAG) system designed to se
 
 **🌎 Grounded LLM Responses:** Powered by Google Gemini via LangChain to produce precise, hallucination-free answers formatted in clean Markdown.
 
+**👋 Evaluation of the  LLM Responses:** Using ragas library the RAG application is evaluated with evaluation metrics( Faithfulness, Answer Relevancy, Context Precision, Context Recall )
+
+   ***Faithfulness:*** Measures whether the generated answer is derived exclusively from the retrieved context without hallucinating outside information.
+
+   ***Answer Relevancy:*** Measures how directly and appropriately the generated answer addresses the user's original query.
+
+   ***Context Precision:*** Measures whether the retrieved context contains only relevant information without unnecessary noise or distractions.
+
+   ***Context Recall:*** Measures whether the retrieval system successfully fetched all the necessary information from the source text needed to fully answer the query.
 
 ## 📱 Project Application Screenshots
 
@@ -23,12 +32,20 @@ An intelligent, aware Retrieval-Augmented Generation (RAG) system designed to se
 * the response for the query asked to the RAG application with a filter
 ![response UI STREAMLIT](image-1.png)
 
+### Evaluation score of the response from the llm (LLM  AS A JUDGE)
+* the Multi Insure Policy Rag application is evaluated, and the query and the response is also mentioned below
+![Single Evaluation Results](image-2.png)
+
+* the scores of the evaluation metrics
+![metrics](image-3.png)
 
 ## 🛠️ Tech Stack & Tools
 
 **Language:** Python
 
 **Framework:** Langchain
+
+**Evaluation Framework:** Ragas
 
 **VectorDB:** FAISS (Facebook AI Similarity Search)
 

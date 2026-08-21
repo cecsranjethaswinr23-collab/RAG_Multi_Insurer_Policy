@@ -5,86 +5,31 @@ from ragas.metrics import faithfulness, answer_relevancy, context_precision, con
 
 # Import your LangChain components
 from langchain_huggingface import HuggingFaceEmbeddings
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Loads GOOGLE_API_KEY
+
+
 # the seperate llm prompt file
 from RAG_LLM_Prompt import llm_prompt
 
-def run_evaluation():
-    # 1. Initialize your RAG System
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    vectorstore = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
-    llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0.1)
-
-
-    # THE TEMPLATE FOR THE PROMPT TO PUT IT IN A CHAIN  
-
-    #   prompt_template = """Use the following pieces of context to answer the question at the end. 
-    #   Context: {context}
-    #   Question: {question}
-    #   Answer:"""
-    #   llm_prompt = PromptTemplate.from_template(prompt_template)
-
-
-    chain = llm_prompt | llm
-
-    # 2. Define test cases
-    eval_questions = [
-        "What are the exclusions for pre-existing conditions?",
-        "Does the policy cover maternity expenses?"
-    ]
-    ground_truths = [
-        "Pre-existing conditions are excluded for the first 24 months of the policy.",
-        "Yes, maternity expenses are covered up to a limit of $5,000 after a 9-month waiting period."
-    ]
-
-    answers = []
-    contexts = []
-
-    print("Running queries through FAISS...")
-    # 3. Generate answers and retrieve contexts
-    for q in eval_questions:
-        retrieved_docs = vectorstore.similarity_search(q, k=4)
-        context_string = "\n\n---\n\n".join([doc.page_content for doc in retrieved_docs])
-        
-        response = chain.invoke({"context": context_string, "question": q})
-        answer_text = response.content[0]["text"] if isinstance(response.content, list) else response.content
-        
-        answers.append(answer_text)
-        contexts.append([doc.page_content for doc in retrieved_docs])
-
-    # 4. Format the dataset for Ragas
-    dataset = Dataset.from_dict({
-        "question": eval_questions,
-        "answer": answers,
-        "contexts": contexts,
-        "ground_truth": ground_truths
-    })
-
-    print("Scoring responses with Ragas...")
-    # 5. Run the evaluation
-    results = evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision, context_recall])
-    df_results = results.to_pandas()
-    
-    # 6. Save and print results
-    df_results.to_csv("evaluation_results.csv", index=False)
-    print("\nEvaluation complete! Results saved to evaluation_results.csv")
-    
-    # Print average scores to the terminal
-    print("\n--- Average Scores ---")
-    print(df_results[['faithfulness', 'answer_relevancy', 'context_precision', 'context_recall']].mean())
-
-if __name__ == "__main__":
-    run_evaluation()
 
 def evaluate_single_query(user_query, ground_truth, company_filter):
 
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2") # embedding model
     vectorstore = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True) # loading local FAISS index file
     llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0.1) # setting up the LLM to use for the evaluation
+
+    wrap_llm = LangchainLLMWrapper(llm) # wrapper used to explicitly mention the llm
+    wrap_embeddings = LangchainEmbeddingsWrapper(embeddings) # wrapper used to explicitly mention the embeddings model
     
     chain = llm_prompt | llm
 
@@ -110,15 +55,17 @@ def evaluate_single_query(user_query, ground_truth, company_filter):
         "ground_truth": [ground_truth]
     }
     dataset = Dataset.from_dict(data)
-    
+
+    #----------------------------------------------------------------------------------------------------------------------------
+    # evaluation starts here
     print("Scoring with Ragas...")
-    results = evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision, context_recall])
+    results = evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision, context_recall],llm=wrap_llm,embeddings=wrap_embeddings)
     print(f"the actual results:\n {results}\n\n")
     df_results = results.to_pandas()
     
     print("Single Evaluation Results\n")
-    print(f"Question: {user_query}")
-    print(f"Answer:   {answer_text}")
+    print(f"Question: {user_query}") # the query to the RAG application
+    print(f"Answer:   {answer_text}") # the response from the llm
     print("\nScores:")
     print(f"- Faithfulness:      {df_results.iloc[0]['faithfulness']:.4f}")
     print(f"- Answer Relevancy:  {df_results.iloc[0]['answer_relevancy']:.4f}")
@@ -164,8 +111,4 @@ ground_truth="Expenses related to any treatment necessitated due to participatio
 
 if __name__ == "__main__":
     # Execute a single test directly in PowerShell
-    evaluate_single_query(
-        user_query,
-        ground_truth,
-        company_filter 
-    )
+    evaluate_single_query(user_query,ground_truth,company_filter)
